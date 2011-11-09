@@ -1,0 +1,34 @@
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Add Chinese to Review</title>
+</head>
+
+<body>
+
+<div id="lookup">
+
+<form method="post" action="/csa">
+  Search by simplified character: <input name="simplified" size="10"
+  maxlength="1024" type="text"> <button type="submit"
+  name="submit">Search</button> </form>
+</div>
+
+<div id="add_to_deck">
+<form method="post" action="/fc/add">
+<label for="simplified">Simplified Character</label>
+<input name="simplified" size="10">
+<label for="traditional">Traditional Character</label>
+<input name="traditional" size="10">
+<label for="pinyin">Pinyin</label>
+<input name="pinyin" size="20">
+<label for="english">English</label>
+<input name="english" size="32">
+<button type="submit" name="submit">Add it to deck</button>
+</form>
+</div>
+<div id="results">
+</div>
+</body>
+</html>
