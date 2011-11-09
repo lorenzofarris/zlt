@@ -1,0 +1,54 @@
+h1. ZLT
+
+This is a toy project I put together to teach myself clojure and some of the associated libraries.
+My hope, besides scratching my own itch, is to provide some sample code with documentation, 
+to shorten the learning curve of others. I'm afraid that I find code samples that I have found so
+far to not be very adequate for my purposes.
+
+This project is a web-based flashcard program for learning chinese characters. If you are looking
+for a flashcard program, there are better options out there. jMemorize and Anki are freely
+available, and memrise provides an excellent, free, web based option. 
+
+What I do include, that hasn't been available in the programs I have been using, is character
+lookup using cedict open source character dictionary. 
+
+h2. Caveats
+
+I do not code for a living. I do this little bit for fun and learning. I am open to constructive 
+criticism, as I'm sure there is plenty of room for improvement here.
+
+h2. Dependencies
+
+Besides the aforementioned cedict chinese character dictionary, I am using 
+
+* lein - a clojure build tool. I would recommend using lein or cake to manage project dependencies
+* ring - a web applications library
+* compojure - a web framework for clojure
+* enlive - a library for transforming html documents
+* clojureql - a DSL for jdbc
+* h2 - a java rdbms, for an embedded database
+
+h2. Setup
+
+At this point, I've got functions to create the required db tables. I ran those functions
+from the REPL. I currently start up a swank server from lein for testing and development.
+
+h2. What is already done.
+
+* Some basic web pages.
+* Search cedict by simplified character
+* Create a flashcard and add it to the single global deck
+* Edit a flashcard
+* Delete a flashcard
+
+h2. To be done
+
+* Basic flashcard review
+* Improve the visual appearance of the web pages
+* Automated creation of database tables
+* Lookup based on traditional character, english, or pinyin
+* integration with google translate
+
+ 
+
+ 
