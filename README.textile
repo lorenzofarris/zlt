@@ -48,7 +48,7 @@ h2. To be done
 * Automated creation of database tables
 * Lookup based on traditional character, english, or pinyin
 * integration with google translate
-
+* Figure out how to use git
  
 
  
