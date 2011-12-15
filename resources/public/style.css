@@ -18,5 +18,13 @@ background-color: #80ff80;
 }
 span#simplified_character
 {
-font-size: 400%
+font-size: 400%;
+}
+.character
+{
+font-size: 800%;
+}
+.pinyin
+{
+font-size: large;
 }

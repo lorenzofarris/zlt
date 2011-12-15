@@ -5,7 +5,6 @@
   (:use net.cgrand.enlive-html)
   (:use compojure.core)
   (:use [clojure.string :only (split trim)])
-  (:use net.cgrand.enlive-html)
   (:require [compojure.route :as route]
 	    [compojure.handler :as handler]
 	    [clojure.contrib.logging :as log]
@@ -71,13 +70,21 @@ prepopulate form fields to add it"
   (do (zdb/update-card m)
       (views/cards-list-transform)))
 
+(defmethod print-method clojure.lang.PersistentQueue
+  [q, w]
+  (print-method '<- w) (print-method (seq q) w) (print-method '-< w))
+
 (defn review-first-card
   "set up the flashcard review, and show the first card"
   []
   ;;
+  ;; get the flashcards that are due for review
   (do
-    ;; get the flashcards that are due for review
     (def review-deck (zdb/get-review-deck))
+    (def cards-done [])
+    (def cards-missed (clojure.lang.PersistentQueue/EMPTY))
+    (def current-card (first review-deck))
+    (views/front current-card)
     )
   )
 
@@ -94,7 +101,7 @@ prepopulate form fields to add it"
   (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
   (POST "/fc/update" {params :params} (apply str (update-card params)))
   (GET "/fc/review" [] (apply str (review-first-card)))
-  (GET "/fc/next" [] (apply str (review-next-card)))
+  ;;(GET "/fc/next" [] (apply str (review-next-card)))
   (route/resources "/")
   (route/not-found "Page not found"))
 

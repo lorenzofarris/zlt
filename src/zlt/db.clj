@@ -2,8 +2,10 @@
   (:use [clojure.string :only (split trim)])
   (:require [clojure.contrib.logging :as log]
 	    [clojure.contrib.io :as io]
-            [clojure.contrib.sql :as sql]
-            [clojureql.core :as cql]))
+            ;;            [clojure.contrib.sql :as sql]
+            [clojure.java.jdbc :as sql]
+            [clojureql.core :as cql]
+            ))
 
 ;;(log/debug "testing logging subsystem")
 

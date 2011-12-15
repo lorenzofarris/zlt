@@ -57,9 +57,72 @@
   [:div#edit_card [:input (attr= :name "pinyin")]](set-attr :value (:pinyin m))
   [:div#edit_card [:input (attr= :name "english")]](set-attr :value (:english m)))
 
-;;(deftemplate ac "public/add.html" [m]
-;;  [:div#lookup [:input (attr= :name "simplified")]] (set-attr :value (:simplified m))
-;;  [:div#add_to_deck [:input (attr= :name "simplified")]] (set-attr :value (:simplified m))
-;;  [:div#add_to_deck [:input (attr= :name "traditional")]] (set-attr :value (:traditional m))
-;;  [:div#add_to_deck [:input (attr= :name "pinyin")]] (set-attr :value (:pinyin m))
-;;  [:div#add_to_deck [:input (attr= :name "english")]] (set-attr :value (:english m)))
+
+(deftemplate front-character-template "review.html" [m]
+  [:div#front :div.character] (do->
+                               (content (:simplified m))
+                               (remove-attr :hidden))
+  [:div#check] (remove-attr :hidden)
+  )
+
+(defn full-character-template
+  "show front and back of card together"
+  [m]
+  (let [res (front-character-template m)]
+    (at res
+        [:div#back :div.pinyin] (do->
+                                 (content (:pinyin m))
+                                 (remove-attr :hidden))
+        [:div#back :div.english] (do->
+                                  (content (:english m))
+                                  (remove-attr :hidden))
+        [:div#score] (remove-attr :hidden))))
+
+(deftemplate check-character-template "review.html" [m]
+  [:div#front :p.character] (content (:simplified m))
+  [:div#back :p.pinyin] (content (:pinyin m))
+  [:div#back :p.english] (content (:english m))
+  [:p.score] (set-attr :style "display:inline;")
+  )
+
+(deftemplate front-pinyin-template "review.html" [m]
+  [:div#front :p.pinyin] (content (:pinyin m))
+  [:div#front :p.english] (content (:english m))
+  )
+
+(defn full-pinyin-template
+  "show front and back of card together"
+  [m]
+  (let [res (front-pinyin-template m)]
+    (at res
+        [:div#back :div.character] (do->
+                                 (content (:character m))
+                                 (remove-attr :hidden))
+        [:div#score] (remove-attr :hidden))))
+
+(deftemplate check-pinyin-template "review.html" [m]
+  [:div#back :p.character] (content (:simplified m))
+  [:div#front :p.pinyin] (content (:pinyin m))
+  [:div#front :p.english] (content (:english m))
+  [:p.score] (set-attr :style "display:inline;"))
+  
+(defn front [m]
+  "render a flashcard for review with the backside hidden"
+  (cond
+   (= (:type m) "character") (front-character-template m)
+   (= (:type m) "pinyin") (front-pinyin-template m)
+   :else "bad card"
+   )
+  )
+
+(defn back [m]
+  "reveal the backside of the card"
+  (cond
+   (= (:type m) "character") (apply str (emit* (full-character-template m)))
+   (= (:type m) "pinyin") (apply str (emit* (full-pinyin-template m)))
+   :else "bad card"
+   )
+  )
+
+
+
