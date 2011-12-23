@@ -7,12 +7,15 @@
   (:use [clojure.string :only (split trim)])
   (:require [compojure.route :as route]
 	    [compojure.handler :as handler]
-	    [clojure.contrib.logging :as log]
             [zlt.db :as zdb]
-            [zlt.views :as views]))
+            [zlt.views :as views]
+            [zlt.sm2 :as sm2]))
 
-;;(log/debug "testing logging subsystem")
-
+;; some variables
+(def *current-card* {})
+(def *cards-missed* (clojure.lang.PersistentQueue/EMPTY))
+(def *cards-done* [])
+(def *review-deck* [])
 
 (defn ac1 [m] (apply str (emit* (views/add-char-transform m))))
 
@@ -80,13 +83,38 @@ prepopulate form fields to add it"
   ;;
   ;; get the flashcards that are due for review
   (do
-    (def review-deck (zdb/get-review-deck))
-    (def cards-done [])
-    (def cards-missed (clojure.lang.PersistentQueue/EMPTY))
-    (def current-card (first review-deck))
+    (def *review-deck* (zdb/get-review-deck))
+    (def *cards-done* [])
+    (def *current-card* (first review-deck))
     (views/front current-card)
     )
   )
+
+(defn- get-sm-parameters [m]
+  (if (= "character" (:type m))
+    {:rep_real (:rep_char_real m)
+     :rep_effective (:rep_char_effective m)
+     :ef (:ef_char m)
+     :next_rep (:next_rep_char m)}
+    {:rep_real (:rep_pinyin_real m)
+     :rep_effective (:rep_pinyin_effective m)
+     :ef (:ef_pinyin m)
+     :next_rep (:next_pinyin_char m)}
+    )
+  )
+  
+(defn score [m]
+  "calculate the new difficulty factor and
+new interval, and re-review if answer is not quick enough"
+  ;; from web form I get only the score
+  (let [s (:score m)
+        smp (get-sm-parameters *current-card*)
+        ef (sm2/difficulty (:ef smp))
+        i1 (sm2/interval (:rep_effective smp)
+                         (:ef smp)
+                         s
+                         ]
+    ))
 
 (defroutes main-routes
   ;;(GET "/" [] "<h1>Hello Worldy!</h1>")
@@ -101,6 +129,8 @@ prepopulate form fields to add it"
   (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
   (POST "/fc/update" {params :params} (apply str (update-card params)))
   (GET "/fc/review" [] (apply str (review-first-card)))
+  (ANY "/fc/check" [] (views/back current-card))
+  (POST "fc/score" {params :params} (score params))
   ;;(GET "/fc/next" [] (apply str (review-next-card)))
   (route/resources "/")
   (route/not-found "Page not found"))
