@@ -7,12 +7,8 @@
   (:use [clojure.string :only (split trim)])
   (:require [compojure.route :as route]
 	    [compojure.handler :as handler]
-	    [clojure.contrib.logging :as log]
             [zlt.db :as zdb]
             [zlt.views :as views]))
-
-;;(log/debug "testing logging subsystem")
-
 
 (defn ac1 [m] (apply str (emit* (views/add-char-transform m))))
 
