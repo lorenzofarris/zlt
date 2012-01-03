@@ -1,13 +1,9 @@
 (ns zlt.db
   (:use [clojure.string :only (split trim)])
-  (:require [clojure.contrib.logging :as log]
-	    [clojure.contrib.io :as io]
-            ;;            [clojure.contrib.sql :as sql]
+  (:require [clojure.contrib.io :as io]
             [clojure.java.jdbc :as sql]
             [clojureql.core :as cql]
             ))
-
-;;(log/debug "testing logging subsystem")
 
 ;;(def db {:classname "org.apache.derby.jdbc.EmbeddedDriver"
 ;;         :subprotocol "derby"
@@ -114,7 +110,9 @@
                        :rep_pinyin_real
                        :rep_pinyin_effective
                        :ef_pinyin
-                       :next_rep_pinyin])
+                       :next_rep_pinyin
+                       :interval_char
+                       :interval_pinyin ])
 
 (defn add-flashcard
   "add a new flashcard to the flashcard table,
@@ -140,7 +138,9 @@ and initialize supermemo parameters"
          :rep_pinyin_real 1
          :rep_pinyin_effective 1
          :ef_pinyin 2.5
-         :next_rep_pinyin today})))))
+         :next_rep_pinyin today
+         :interval_char 1
+         :interval_pinyin 1 })))))
 
 (defn update-card
   "add a new flashcard to the flashcard table,
@@ -165,7 +165,9 @@ and initialize supermemo parameters"
       :rep_pinyin_real 1
       :rep_pinyin_effective 1
       :ef_pinyin 2.5
-      :next_rep_pinyin today})))
+      :next_rep_pinyin today
+      :interval_char 1
+      :interval_pinyin 1})))
 
 
 (defn create-flashcard-table
@@ -185,6 +187,8 @@ and initialize supermemo parameters"
    [:rep_pinyin_effective "int"]
    [:ef_pinyin "real"]
    [:next_rep_pinyin "timestamp"]
+   [:interval_char "int"]
+   [:interval_pinyin "int"]
    [:index "int" "IDENTITY"]
    ))
 

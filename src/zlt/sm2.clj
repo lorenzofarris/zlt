@@ -1,9 +1,5 @@
-(ns zlt.sm2
-  (:use [clojure.string :only (split trim)])
-  (:require [clojure.contrib.logging :as log]
-	    [clojure.contrib.io :as io]
-            [clojure.contrib.sql :as sql]
-            [clojureql.core :as cql]))
+(ns zlt.sm2)
+            
 ;; calculations of optimal next repetition of flash card items
 
 (defn difficulty
@@ -23,7 +19,11 @@ quality of response of repetition, where
 
 (defn interval
   "calculate interval until next review of card, given repetition number,
-difficulty factor, and quality of current answer"
+difficulty factor, and quality of current answer. Arguments are
+n: repetition number
+d: current difficulty factor
+q: quality of response
+i: old interval"
   [n d q i]
   (cond
    (= n 1) 1
