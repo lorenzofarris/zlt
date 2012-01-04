@@ -1,5 +1,6 @@
 (ns zlt.views
   (:use net.cgrand.enlive-html)
+  (:use clojure.tools.logging)
   (:require [zlt.db :as zdb]))
 
 (deftemplate cs "cs.html" [s] [:div#results]
@@ -117,11 +118,14 @@
   
 (defn front [m]
   "render a flashcard for review with the backside hidden"
-  (cond
-   (= (:type m) "character") (apply str (emit* (front-character-xform m)))
-   (= (:type m) "pinyin") (front-pinyin-template m)
-   :else "bad card"
-   )
+  (do
+    (debug "in views/front" m)
+    (cond
+     (= (:type m) "character") (apply str (emit* (front-character-xform m)))
+     (= (:type m) "pinyin") (front-pinyin-template m)
+     :else "bad card"
+     )
+    )
   )
 
 (defn back [m]

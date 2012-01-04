@@ -5,6 +5,7 @@
   (:use net.cgrand.enlive-html)
   (:use compojure.core)
   (:use [clojure.string :only (split trim)])
+  (:use clojure.tools.logging)
   (:require [compojure.route :as route]
 	    [compojure.handler :as handler]
             [zlt.db :as zdb]
@@ -12,10 +13,10 @@
             [zlt.sm2 :as sm2]))
 
 ;; some variables
-(def ^:dynamic *current-card* {} )
-(def ^:dynamic *cards-missed* (clojure.lang.PersistentQueue/EMPTY))
-(def ^:dynamic *cards-done* [])
-(def ^:dynamic *review-deck* [])
+(def current-card {} )
+(def cards-missed (clojure.lang.PersistentQueue/EMPTY))
+(def cards-done [])
+(def review-deck [])
 
 (defn ac1 [m] (apply str (emit* (views/add-char-transform m))))
 
@@ -83,10 +84,12 @@ prepopulate form fields to add it"
   ;;
   ;; get the flashcards that are due for review
   (do
-    (def *review-deck* (zdb/get-review-deck))
-    (def *cards-done* [])
-    (def *current-card* (first *review-deck*))
-    (views/front *current-card*)
+    (def review-deck (zdb/get-review-deck))
+    ;;(debug review-deck)
+    (def cards-done [])
+    (def current-card (first review-deck))
+    (debug current-card)
+    (views/front current-card)
     )
   )
 
@@ -127,8 +130,11 @@ new interval, and re-review if answer is not quick enough"
   (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
   (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
   (POST "/fc/update" {params :params} (apply str (update-card params)))
+  ;; show just the front of the flashcard
   (GET "/fc/review" [] (apply str (review-first-card)))
-  (ANY "/fc/check" [] (views/back *current-card*))
+  ;; show the whole flashcard
+  (ANY "/fc/check" [] (views/back current-card))
+  ;; score the card
   (POST "fc/score" {params :params} (score params))
   ;;(GET "/fc/next" [] (apply str (review-next-card)))
   (route/resources "/")
@@ -147,3 +153,4 @@ new interval, and re-review if answer is not quick enough"
 
 (defn start-server []
   (future (run-jetty #'app {:port 8080 :join false})))
+

@@ -7,6 +7,7 @@
 		 [ring/ring-jetty-adapter "0.3.11"]
 		 [enlive "1.0.0"]
 		 [compojure "0.6.5"]
+                 [org.clojure/tools.logging "0.2.3"]
 		 [log4j "1.2.16"]
                  [clojureql "1.1.0-SNAPSHOT"]
                  [com.h2database/h2 "1.3.160"]]
