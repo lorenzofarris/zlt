@@ -12,10 +12,10 @@
             [zlt.sm2 :as sm2]))
 
 ;; some variables
-(def *current-card* {})
-(def *cards-missed* (clojure.lang.PersistentQueue/EMPTY))
-(def *cards-done* [])
-(def *review-deck* [])
+(def ^:dynamic *current-card* {} )
+(def ^:dynamic *cards-missed* (clojure.lang.PersistentQueue/EMPTY))
+(def ^:dynamic *cards-done* [])
+(def ^:dynamic *review-deck* [])
 
 (defn ac1 [m] (apply str (emit* (views/add-char-transform m))))
 
@@ -85,8 +85,8 @@ prepopulate form fields to add it"
   (do
     (def *review-deck* (zdb/get-review-deck))
     (def *cards-done* [])
-    (def *current-card* (first review-deck))
-    (views/front current-card)
+    (def *current-card* (first *review-deck*))
+    (views/front *current-card*)
     )
   )
 
@@ -107,14 +107,13 @@ prepopulate form fields to add it"
   "calculate the new difficulty factor and
 new interval, and re-review if answer is not quick enough"
   ;; from web form I get only the score
-  (let [s (:score m)
-        smp (get-sm-parameters *current-card*)
-        ef (sm2/difficulty (:ef smp))
-        i1 (sm2/interval (:rep_effective smp)
-                         (:ef smp)
-                         s
-                         ]
-    ))
+  (let [s (:score m)]
+;;        smp (get-sm-parameters *current-card*)
+;;        ef (sm2/difficulty (:ef smp))
+;;        i1 (sm2/interval (:rep_effective smp)
+;;                         (:ef smp)
+;;                         s
+        ))
 
 (defroutes main-routes
   ;;(GET "/" [] "<h1>Hello Worldy!</h1>")
@@ -129,7 +128,7 @@ new interval, and re-review if answer is not quick enough"
   (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
   (POST "/fc/update" {params :params} (apply str (update-card params)))
   (GET "/fc/review" [] (apply str (review-first-card)))
-  (ANY "/fc/check" [] (views/back current-card))
+  (ANY "/fc/check" [] (views/back *current-card*))
   (POST "fc/score" {params :params} (score params))
   ;;(GET "/fc/next" [] (apply str (review-next-card)))
   (route/resources "/")
