@@ -6,6 +6,7 @@
   (:use compojure.core)
   (:use [clojure.string :only (split trim)])
   (:use clojure.tools.logging)
+  (:use [clojure.tools.trace :only [deftrace]])
   (:require [compojure.route :as route]
 	    [compojure.handler :as handler]
             [zlt.db :as zdb]
@@ -133,7 +134,7 @@ new interval, and re-review if answer is not quick enough"
   ;; show just the front of the flashcard
   (GET "/fc/review" [] (apply str (review-first-card)))
   ;; show the whole flashcard
-  (ANY "/fc/check" [] (views/back current-card))
+  (GET "/fc/check" [] (views/back current-card))
   ;; score the card
   (POST "fc/score" {params :params} (score params))
   ;;(GET "/fc/next" [] (apply str (review-next-card)))
