@@ -14,10 +14,14 @@
             [zlt.sm2 :as sm2]))
 
 ;; some variables
-(def current-card {} )
-(def cards-missed (clojure.lang.PersistentQueue/EMPTY))
-(def cards-done [])
-(def review-deck [])
+(def current-card (ref {}))
+(def cards-missed (ref (clojure.lang.PersistentQueue/EMPTY)))
+(def cards-done (ref []))
+(def review-deck (ref []))
+;;(def current-card)
+;;(def cards-missed)
+;;(def cards-done)
+;;(def review-deck)
 
 (defn ac1 [m] (apply str (emit* (views/add-char-transform m))))
 
@@ -79,18 +83,21 @@ prepopulate form fields to add it"
   [q, w]
   (print-method '<- w) (print-method (seq q) w) (print-method '-< w))
 
-(defn review-first-card
-  "set up the flashcard review, and show the first card"
-  []
-  ;;
-  ;; get the flashcards that are due for review
+(defn first-card
+  "get the flashcards that are due for review" []
+  (let [rd (zdb/get-review-deck)]
+    (dosync 
+     (ref-set review-deck rd)
+     (ref-set cards-done [])
+     (ref-set current-card (first @review-deck))
+     @current-card
+    )))
+  
+
+(defn review-first-card "show the first card" []
   (do
-    (def review-deck (zdb/get-review-deck))
-    ;;(debug review-deck)
-    (def cards-done [])
-    (def current-card (first review-deck))
-    (debug current-card)
-    (views/front current-card)
+    (first-card)
+    (views/front @current-card)
     )
   )
 
@@ -132,7 +139,12 @@ new interval, and re-review if answer is not quick enough"
   (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
   (POST "/fc/update" {params :params} (apply str (update-card params)))
   ;; show just the front of the flashcard
-  (GET "/fc/review" [] (apply str (review-first-card)))
+  (GET "/fc/review" []
+       (let [rsps (apply str (review-first-card))]
+         (debug "in /fc/review route" @current-card)
+         rsps
+         )
+       )
   ;; show the whole flashcard
   (GET "/fc/check" [] (views/back current-card))
   ;; score the card

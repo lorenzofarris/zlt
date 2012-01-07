@@ -14,5 +14,5 @@
                  [com.h2database/h2 "1.3.160"]]
   :dev-dependencies [[ring/ring-devel "0.3.11"]
 		     [lein-ring "0.4.5"]
-                     [swank-clojure "1.3.2"]]
+                     [swank-clojure "1.4.0-SNAPSHOT"]]
   :ring {:handler zlt.core/app})
