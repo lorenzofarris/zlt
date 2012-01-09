@@ -126,41 +126,47 @@ new interval, and re-review if answer is not quick enough"
 ;;                         s
         ))
 
-(defroutes main-routes
+;;(defroutes main-routes
   ;;(GET "/" [] "<h1>Hello Worldy!</h1>")
-  (GET "/" [] (apply str (emit* index-layout)))
-  (GET "/cs" [] (render-search-results ""))
-  (POST "/cs" [simplified] (render-search-results simplified))
-  (POST "/csa" [simplified] (apply str (lookup-char-to-learn simplified)))
-  (POST "/fc/add" {params :params} (apply str (add-flashcard params)))
-  (GET "/fc" [] (apply str (views/cards-list-transform)))
-  (GET "/fc/delete-confirm/:id" [id] (apply str (delete-card-confirm id)))
-  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
-  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
-  (POST "/fc/update" {params :params} (apply str (update-card params)))
+;;  (GET "/" [] (apply str (emit* index-layout)))
+;;  (GET "/cs" [] (render-search-results ""))
+;;  (POST "/cs" [simplified] (render-search-results simplified))
+;;  (POST "/csa" [simplified] (apply str (lookup-char-to-learn simplified)))
+;;  (POST "/fc/add" {params :params} (apply str (add-flashcard params)))
+;;  (GET "/fc" [] (apply str (views/cards-list-transform)))
+;;  (GET "/fc/delete-confirm/:id" [id] (apply str (delete-card-confirm id)))
+;;  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
+;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
+;;  (POST "/fc/update" {params :params} (apply str (update-card params)))
   ;; show just the front of the flashcard
-  (GET "/fc/review" []
-       (let [rsps (apply str (review-first-card))]
-         (debug "in /fc/review route" @current-card)
-         rsps
-         )
-       )
+;;  (GET "/fc/review" []
+;;       (let [rsps (apply str (review-first-card))]
+;;         (debug "in /fc/review route" @current-card)
+;;         rsps
+;;         )
+;;      )
   ;; show the whole flashcard
-  (GET "/fc/check" [] (views/back current-card))
-  ;; score the card
-  (POST "fc/score" {params :params} (score params))
+;;  (GET "/fc/check" [] (views/back current-card))
+;;  ;; score the card
+;;  (POST "fc/score" {params :params} (score params))
   ;;(GET "/fc/next" [] (apply str (review-next-card)))
-  (route/resources "/")
-  (route/not-found "Page not found"))
+;;  (route/resources "/")
+;;  (route/not-found "Page not found"))
 
-(def app-handler
-  (handler/site main-routes))
+;;(def app-handler
+;;  (handler/site main-routes))
 
-(def app
-  (-> #'app-handler
-      (wrap-reload '(zlt.core))
-      (wrap-stacktrace)))
+;;(def app
+;;  (-> #'app-handler
+;;      (wrap-reload '(zlt.core))
+;;      (wrap-stacktrace)))
 
+(defn app [req]
+  {:status 200
+   :headers {"Content-Type" "text/html"}
+   :body  (apply str (review-first-card))
+   }
+  )
 (defn boot []
   (run-jetty #'app {:port 8080}))
 
