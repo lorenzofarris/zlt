@@ -14,5 +14,7 @@
                  [com.h2database/h2 "1.3.160"]]
   :dev-dependencies [[ring/ring-devel "0.3.11"]
 		     [lein-ring "0.4.5"]
-                     [swank-clojure "1.4.0-SNAPSHOT"]]
+                     [swank-clojure "1.4.0-SNAPSHOT"]
+                     [clojure-source "1.3.0"]]
+  :jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"]
   :ring {:handler zlt.core/app})
