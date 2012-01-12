@@ -162,12 +162,10 @@ new interval, and re-review if answer is not quick enough"
 ;;      (wrap-stacktrace)))
 
 (defn app [req]
-  (let [ resp  {:status 200
-                :headers {"Content-Type" "text/html"}
-                :body  (apply str (review-first-card))
-                }]
-    (debug @current-card)
-    resp
+  {:status 200
+   :headers {"Content-Type" "text/html"}
+   :body  (apply str (review-first-card))
+   }
   )
 (defn boot []
   (run-jetty #'app {:port 8080}))
