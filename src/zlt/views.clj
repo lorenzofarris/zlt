@@ -69,6 +69,7 @@
 
 (defn front-character-xform [m]
   (let [layout (html-resource "review.html")]
+    (debug "in front-character-xform: " (:simplified m))
     (at layout
         [:div#front :div.character] (do->
                                      (content (:simplified m))
@@ -120,6 +121,7 @@
 (defn front [m]
   "render a flashcard for review with the backside hidden"
   (do
+    (debug "in views/front: " (:simplified m))
     (cond
      (= (:type m) "character") (apply str (emit* (front-character-xform m)))
      (= (:type m) "pinyin") (front-pinyin-template m)

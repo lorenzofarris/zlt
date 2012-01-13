@@ -97,7 +97,11 @@ prepopulate form fields to add it"
 (defn review-first-card "show the first card" []
   (do
     (first-card)
-    (views/front @current-card)
+    (debug "in review-first-card: " @current-card)
+    (let [resp (views/front @current-card)]
+      (debug "in review-first-card: " resp)
+      resp
+      )
     )
   )
 
@@ -163,8 +167,8 @@ new interval, and re-review if answer is not quick enough"
 
 (defn app [req]
   {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body  (apply str (review-first-card))
+   :headers {"Content-Type" "text/html; charset=utf-8"}
+   :body  (apply str (views/back @current-card))
    }
   )
 (defn boot []
