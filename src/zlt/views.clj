@@ -88,7 +88,11 @@
         [:div#back :div.english] (do->
                                   (remove-attr :hidden)
                                   (content (:english m)))
-        [:div#score] (set-attr :style "display:in-line"))))
+        [:div#score] (set-attr :style "display:in-line")
+        [:div#check] (set-attr :hidden "hidden")
+        )
+    )
+  )
 
 (deftemplate check-character-template "review.html" [m]
   [:div#front :p.character] (content (:simplified m))

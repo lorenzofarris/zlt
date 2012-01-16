@@ -2,6 +2,7 @@
   (:use ring.adapter.jetty)
   (:use ring.middleware.reload)
   (:use ring.middleware.stacktrace)
+  (:use ring.middleware.file)
   (:use ring.util.response)
   (:use net.cgrand.enlive-html)
   ;;(:use compojure.core)
@@ -133,8 +134,6 @@ new interval, and re-review if answer is not quick enough"
         ))
 
 ;;(defroutes main-routes
-;;  (GET "/" [] "<h1>Hello Worldy!</h1>")
-;;  (GET "/" [] (apply str (emit* index-layout)))
 ;;  (GET "/cs" [] (render-search-results ""))
 ;;  (POST "/cs" [simplified] (render-search-results simplified))
 ;;  (POST "/csa" [simplified] (apply str (lookup-char-to-learn simplified)))
@@ -171,9 +170,7 @@ new interval, and re-review if answer is not quick enough"
 
 ;;(def app
 ;;  (-> #'app-handler
-;;      (wrap-reload '(zlt.core))
-;;      (wrap-stacktrace)))
-
+;; 
 ;; using ring only for testing
 ;;(defn app [req]
 ;;  {:status 200
@@ -200,13 +197,14 @@ new interval, and re-review if answer is not quick enough"
       (constantly))) 
 
 (def zlt-app
-  (mst/app [""] (constantly (response (apply str (emit* index-layout))))
-           ["fc" "review"] (-> (apply str (review-first-card))
-                               (response)
-                               (content-type "text/html; charset=utf-8")
-                               (constantly))
-           ["fc" "check"] (wrapit (views/back @current-card))
-           )
+  (->
+   (mst/app [""] (wrapit (apply str (emit* index-layout)))
+            ["fc" "review"] (wrapit (apply str (review-first-card)))
+            ["fc" "check"] (wrapit (views/back @current-card))
+            )
+   (wrap-file "resources/public")
+   (wrap-reload '(zlt.core))
+   (wrap-stacktrace)
   )
 
 (defn boot []
