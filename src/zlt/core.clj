@@ -191,12 +191,7 @@ new interval, and re-review if answer is not quick enough"
 ;;  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
 ;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
 ;;  (POST "/fc/update" {params :params} (apply str (update-card params)))
-  ;; show just the front of the flashcard
-;;  (GET "/fc/review" []
-;;       (let [rsps (apply str (review-first-card))]
-;;         (debug "in /fc/review route" (:simplified @current-card))
-;;         rsps
-;;         )
+
 
 (defn wrapit [ret]
   (-> ret
@@ -213,8 +208,6 @@ new interval, and re-review if answer is not quick enough"
            ["fc" "check"] (wrapit (views/back @current-card))
            )
   )
-
-  ;;(mst/app [""] "hello world!"))
 
 (defn boot []
   (run-jetty #'zlt-app {:port 8080}))
