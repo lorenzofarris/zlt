@@ -132,11 +132,14 @@
 
 (defn back [m]
   "reveal the backside of the card"
-  (cond
-   (= (:type m) "character") (apply str (emit* (full-character-template m)))
-   (= (:type m) "pinyin") (apply str (full-pinyin-template m))
-   :else "bad card"
-   )
+  (do
+    (debug "in views/back: " (:simplified m))
+    (cond
+      (= (:type m) "character") (apply str (emit* (full-character-template m)))
+      (= (:type m) "pinyin") (apply str (full-pinyin-template m))
+      :else "bad card"
+      )
+    )
   )
 
 

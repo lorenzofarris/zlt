@@ -2,16 +2,18 @@
   (:use ring.adapter.jetty)
   (:use ring.middleware.reload)
   (:use ring.middleware.stacktrace)
+  (:use ring.util.response)
   (:use net.cgrand.enlive-html)
-  (:use compojure.core)
+  ;;(:use compojure.core)
   (:use [clojure.string :only (split trim)])
   (:use clojure.tools.logging)
   (:use [clojure.tools.trace :only [deftrace]])
-  (:require [compojure.route :as route]
-	    [compojure.handler :as handler]
-            [zlt.db :as zdb]
+  ;;[compojure.route :as route]
+  ;;[compojure.handler :as handler]
+  (:require [zlt.db :as zdb]
             [zlt.views :as views]
-            [zlt.sm2 :as sm2]))
+            [zlt.sm2 :as sm2]
+            [net.cgrand.moustache :as mst]))
 
 ;; some variables
 (def current-card (ref {}))
@@ -131,7 +133,7 @@ new interval, and re-review if answer is not quick enough"
         ))
 
 ;;(defroutes main-routes
-  ;;(GET "/" [] "<h1>Hello Worldy!</h1>")
+;;  (GET "/" [] "<h1>Hello Worldy!</h1>")
 ;;  (GET "/" [] (apply str (emit* index-layout)))
 ;;  (GET "/cs" [] (render-search-results ""))
 ;;  (POST "/cs" [simplified] (render-search-results simplified))
@@ -145,12 +147,16 @@ new interval, and re-review if answer is not quick enough"
   ;; show just the front of the flashcard
 ;;  (GET "/fc/review" []
 ;;       (let [rsps (apply str (review-first-card))]
-;;         (debug "in /fc/review route" @current-card)
+;;         (debug "in /fc/review route" (:simplified @current-card))
 ;;         rsps
 ;;         )
-;;      )
+;;       )
   ;; show the whole flashcard
-;;  (GET "/fc/check" [] (views/back current-card))
+;;  (GET "/fc/check" []
+;;    (do
+;;      (debug "in /fc/check route: " (:simplified @current-card))
+;;      (views/back @current-card)))
+    
 ;;  ;; score the card
 ;;  (POST "fc/score" {params :params} (score params))
   ;;(GET "/fc/next" [] (apply str (review-next-card)))
@@ -165,15 +171,51 @@ new interval, and re-review if answer is not quick enough"
 ;;      (wrap-reload '(zlt.core))
 ;;      (wrap-stacktrace)))
 
-(defn app [req]
-  {:status 200
-   :headers {"Content-Type" "text/html; charset=utf-8"}
-   :body  (apply str (views/back @current-card))
-   }
+;; using ring only for testing
+;;(defn app [req]
+;;  {:status 200
+;;   :headers {"Content-Type" "text/html; charset=utf-8"}
+;;   :body  (apply str (views/back @current-card))
+;;   }
+;;  )
+
+;;  (GET "/cs" [] (render-search-results ""))
+;;  (POST "/cs" [simplified] (render-search-results simplified))
+;;  (POST "/csa" [simplified] (apply str (lookup-char-to-learn simplified)))
+;;  (POST "/fc/add" {params :params} (apply str (add-flashcard params)))
+;;  (GET "/fc" [] (apply str (views/cards-list-transform)))
+;;  (GET "/fc/delete-confirm/:id" [id] (apply str (delete-card-confirm id)))
+;;  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
+;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
+;;  (POST "/fc/update" {params :params} (apply str (update-card params)))
+  ;; show just the front of the flashcard
+;;  (GET "/fc/review" []
+;;       (let [rsps (apply str (review-first-card))]
+;;         (debug "in /fc/review route" (:simplified @current-card))
+;;         rsps
+;;         )
+
+(defn wrapit [ret]
+  (-> ret
+      (response)
+      (content-type "text/html; charset=utf-8")
+      (constantly))) 
+
+(def zlt-app
+  (mst/app [""] (constantly (response (apply str (emit* index-layout))))
+           ["fc" "review"] (-> (apply str (review-first-card))
+                               (response)
+                               (content-type "text/html; charset=utf-8")
+                               (constantly))
+           ["fc" "check"] (wrapit (views/back @current-card))
+           )
   )
+
+  ;;(mst/app [""] "hello world!"))
+
 (defn boot []
-  (run-jetty #'app {:port 8080}))
+  (run-jetty #'zlt-app {:port 8080}))
 
 (defn start-server []
-  (future (run-jetty #'app {:port 8080 :join false})))
+  (future (run-jetty #'zlt-app {:port 8080 :join false})))
 
