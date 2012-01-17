@@ -5,12 +5,9 @@
   (:use ring.middleware.file)
   (:use ring.util.response)
   (:use net.cgrand.enlive-html)
-  ;;(:use compojure.core)
   (:use [clojure.string :only (split trim)])
   (:use clojure.tools.logging)
   (:use [clojure.tools.trace :only [deftrace]])
-  ;;[compojure.route :as route]
-  ;;[compojure.handler :as handler]
   (:require [zlt.db :as zdb]
             [zlt.views :as views]
             [zlt.sm2 :as sm2]
@@ -21,10 +18,6 @@
 (def cards-missed (ref (clojure.lang.PersistentQueue/EMPTY)))
 (def cards-done (ref []))
 (def review-deck (ref []))
-;;(def current-card)
-;;(def cards-missed)
-;;(def cards-done)
-;;(def review-deck)
 
 (defn ac1 [m] (apply str (emit* (views/add-char-transform m))))
 
@@ -198,7 +191,8 @@ new interval, and re-review if answer is not quick enough"
 
 (def zlt-app
   (->
-   (mst/app [""] (wrapit (apply str (emit* index-layout)))
+   (mst/app [""] {:get (wrapit (apply str (emit* index-layout)))}
+            ["fc"] (wrapit (apply str (views/cards-list-transform)))
             ["fc" "review"] (wrapit (apply str (review-first-card)))
             ["fc" "check"] (wrapit (views/back @current-card))
             )
