@@ -176,7 +176,6 @@ new interval, and re-review if answer is not quick enough"
 ;;  (POST "/cs" [simplified] (render-search-results simplified))
 ;;  (POST "/csa" [simplified] (apply str (lookup-char-to-learn simplified)))
 ;;  (POST "/fc/add" {params :params} (apply str (add-flashcard params)))
-;;  (GET "/fc" [] (apply str (views/cards-list-transform)))
 ;;  (GET "/fc/delete-confirm/:id" [id] (apply str (delete-card-confirm id)))
 ;;  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
 ;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
@@ -192,6 +191,7 @@ new interval, and re-review if answer is not quick enough"
 (def zlt-app
   (->
    (mst/app [""] {:get (wrapit (apply str (emit* index-layout)))}
+            ["/cs"] {:get (wrapit (render-search-results ""))}
             ["fc"] (wrapit (apply str (views/cards-list-transform)))
             ["fc" "review"] (wrapit (apply str (review-first-card)))
             ["fc" "check"] (wrapit (views/back @current-card))
@@ -199,6 +199,7 @@ new interval, and re-review if answer is not quick enough"
    (wrap-file "resources/public")
    (wrap-reload '(zlt.core))
    (wrap-stacktrace)
+   )
   )
 
 (defn boot []
