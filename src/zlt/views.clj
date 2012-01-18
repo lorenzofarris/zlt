@@ -1,6 +1,7 @@
 (ns zlt.views
   (:use net.cgrand.enlive-html)
   (:use clojure.tools.logging)
+  (:use [clojure.tools.trace :only [deftrace]])
   (:require [zlt.db :as zdb]))
 
 (deftemplate cs "cs.html" [s] [:div#results]
@@ -68,6 +69,7 @@
 
 (defn front-character-xform [m]
   (let [layout (html-resource "review.html")]
+    (debug "in front-character-xform: " (:simplified m))
     (at layout
         [:div#front :div.character] (do->
                                      (content (:simplified m))
@@ -86,7 +88,11 @@
         [:div#back :div.english] (do->
                                   (remove-attr :hidden)
                                   (content (:english m)))
-        [:div#score] (set-attr :style "display:in-line"))))
+        [:div#score] (set-attr :style "display:in-line")
+        [:div#check] (set-attr :hidden "hidden")
+        )
+    )
+  )
 
 (deftemplate check-character-template "review.html" [m]
   [:div#front :p.character] (content (:simplified m))
@@ -119,7 +125,7 @@
 (defn front [m]
   "render a flashcard for review with the backside hidden"
   (do
-    (debug "in views/front" m)
+    (debug "in views/front: " (:simplified m))
     (cond
      (= (:type m) "character") (apply str (emit* (front-character-xform m)))
      (= (:type m) "pinyin") (front-pinyin-template m)
@@ -130,11 +136,14 @@
 
 (defn back [m]
   "reveal the backside of the card"
-  (cond
-   (= (:type m) "character") (apply str (emit* (full-character-template m)))
-   (= (:type m) "pinyin") (apply str (full-pinyin-template m))
-   :else "bad card"
-   )
+  (do
+    (debug "in views/back: " (:simplified m))
+    (cond
+      (= (:type m) "character") (apply str (emit* (full-character-template m)))
+      (= (:type m) "pinyin") (apply str (full-pinyin-template m))
+      :else "bad card"
+      )
+    )
   )
 
 

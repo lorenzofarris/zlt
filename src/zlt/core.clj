@@ -2,21 +2,22 @@
   (:use ring.adapter.jetty)
   (:use ring.middleware.reload)
   (:use ring.middleware.stacktrace)
+  (:use ring.middleware.file)
+  (:use ring.util.response)
   (:use net.cgrand.enlive-html)
-  (:use compojure.core)
   (:use [clojure.string :only (split trim)])
   (:use clojure.tools.logging)
-  (:require [compojure.route :as route]
-	    [compojure.handler :as handler]
-            [zlt.db :as zdb]
+  (:use [clojure.tools.trace :only [deftrace]])
+  (:require [zlt.db :as zdb]
             [zlt.views :as views]
-            [zlt.sm2 :as sm2]))
+            [zlt.sm2 :as sm2]
+            [net.cgrand.moustache :as mst]))
 
 ;; some variables
-(def current-card {} )
-(def cards-missed (clojure.lang.PersistentQueue/EMPTY))
-(def cards-done [])
-(def review-deck [])
+(def current-card (ref {}))
+(def cards-missed (ref (clojure.lang.PersistentQueue/EMPTY)))
+(def cards-done (ref []))
+(def review-deck (ref []))
 
 (defn ac1 [m] (apply str (emit* (views/add-char-transform m))))
 
@@ -78,18 +79,25 @@ prepopulate form fields to add it"
   [q, w]
   (print-method '<- w) (print-method (seq q) w) (print-method '-< w))
 
-(defn review-first-card
-  "set up the flashcard review, and show the first card"
-  []
-  ;;
-  ;; get the flashcards that are due for review
+(defn first-card
+  "get the flashcards that are due for review" []
+  (let [rd (zdb/get-review-deck)]
+    (dosync 
+     (ref-set review-deck rd)
+     (ref-set cards-done [])
+     (ref-set current-card (first @review-deck))
+     @current-card
+    )))
+  
+
+(defn review-first-card "show the first card" []
   (do
-    (def review-deck (zdb/get-review-deck))
-    ;;(debug review-deck)
-    (def cards-done [])
-    (def current-card (first review-deck))
-    (debug current-card)
-    (views/front current-card)
+    (first-card)
+    (debug "in review-first-card: " @current-card)
+    (let [resp (views/front @current-card)]
+      (debug "in review-first-card: " resp)
+      resp
+      )
     )
   )
 
@@ -118,39 +126,84 @@ new interval, and re-review if answer is not quick enough"
 ;;                         s
         ))
 
-(defroutes main-routes
-  ;;(GET "/" [] "<h1>Hello Worldy!</h1>")
-  (GET "/" [] (apply str (emit* index-layout)))
-  (GET "/cs" [] (render-search-results ""))
-  (POST "/cs" [simplified] (render-search-results simplified))
-  (POST "/csa" [simplified] (apply str (lookup-char-to-learn simplified)))
-  (POST "/fc/add" {params :params} (apply str (add-flashcard params)))
-  (GET "/fc" [] (apply str (views/cards-list-transform)))
-  (GET "/fc/delete-confirm/:id" [id] (apply str (delete-card-confirm id)))
-  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
-  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
-  (POST "/fc/update" {params :params} (apply str (update-card params)))
+;;(defroutes main-routes
+;;  (GET "/cs" [] (render-search-results ""))
+;;  (POST "/cs" [simplified] (render-search-results simplified))
+;;  (POST "/csa" [simplified] (apply str (lookup-char-to-learn simplified)))
+;;  (POST "/fc/add" {params :params} (apply str (add-flashcard params)))
+;;  (GET "/fc" [] (apply str (views/cards-list-transform)))
+;;  (GET "/fc/delete-confirm/:id" [id] (apply str (delete-card-confirm id)))
+;;  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
+;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
+;;  (POST "/fc/update" {params :params} (apply str (update-card params)))
   ;; show just the front of the flashcard
-  (GET "/fc/review" [] (apply str (review-first-card)))
+;;  (GET "/fc/review" []
+;;       (let [rsps (apply str (review-first-card))]
+;;         (debug "in /fc/review route" (:simplified @current-card))
+;;         rsps
+;;         )
+;;       )
   ;; show the whole flashcard
-  (GET "/fc/check" [] (views/back current-card))
+;;  (GET "/fc/check" [] (views/back @current-card))
   ;; score the card
-  (POST "fc/score" {params :params} (score params))
+;;  (POST "fc/score" {params :params} (score params))
+;;  (GET "/fc/check" []
+;;    (do
+;;      (debug "in /fc/check route: " (:simplified @current-card))
+;;      (views/back @current-card)))
+    
+;;  ;; score the card
+;;  (POST "fc/score" {params :params} (score params))
   ;;(GET "/fc/next" [] (apply str (review-next-card)))
-  (route/resources "/")
-  (route/not-found "Page not found"))
+;;  (route/resources "/")
+;;  (route/not-found "Page not found"))
 
-(def app-handler
-  (handler/site main-routes))
+;;(def app-handler
+;;  (handler/site main-routes))
 
-(def app
-  (-> #'app-handler
-      (wrap-reload '(zlt.core))
-      (wrap-stacktrace)))
+;;(def app
+;;  (-> #'app-handler
+;; 
+;; using ring only for testing
+;;(defn app [req]
+;;  {:status 200
+;;   :headers {"Content-Type" "text/html; charset=utf-8"}
+;;   :body  (apply str (views/back @current-card))
+;;   }
+;;  )
+
+;;  (GET "/cs" [] (render-search-results ""))
+;;  (POST "/cs" [simplified] (render-search-results simplified))
+;;  (POST "/csa" [simplified] (apply str (lookup-char-to-learn simplified)))
+;;  (POST "/fc/add" {params :params} (apply str (add-flashcard params)))
+;;  (GET "/fc" [] (apply str (views/cards-list-transform)))
+;;  (GET "/fc/delete-confirm/:id" [id] (apply str (delete-card-confirm id)))
+;;  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
+;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
+;;  (POST "/fc/update" {params :params} (apply str (update-card params)))
+
+
+(defn wrapit [ret]
+  (-> ret
+      (response)
+      (content-type "text/html; charset=utf-8")
+      (constantly))) 
+
+(def zlt-app
+  (->
+   (mst/app [""] {:get (wrapit (apply str (emit* index-layout)))}
+            ["fc"] (wrapit (apply str (views/cards-list-transform)))
+            ["fc" "review"] (wrapit (apply str (review-first-card)))
+            ["fc" "check"] (wrapit (views/back @current-card))
+            )
+   (wrap-file "resources/public")
+   (wrap-reload '(zlt.core))
+   (wrap-stacktrace)
+  )
 
 (defn boot []
-  (run-jetty #'app {:port 8080}))
+  (run-jetty #'zlt-app {:port 8080}))
 
 (defn start-server []
-  (future (run-jetty #'app {:port 8080 :join false})))
+  (future (run-jetty #'zlt-app {:port 8080 :join false})))
 
