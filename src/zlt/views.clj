@@ -4,10 +4,10 @@
   (:use [clojure.tools.trace :only [deftrace]])
   (:require [zlt.db :as zdb]))
 
-(deftemplate cs "cs.html" [s] [:div#results]
+(deftemplate cs "public/cs.html" [s] [:div#results]
   (content s))
 
-(deftemplate cs1 "cs.html" [m]
+(deftemplate cs1 "public/cs.html" [m]
   [:span#simplified](content (:simplified m))
   [:span#pinyin](content (:pinyin m))
   [:span#english](content (:english m)))
