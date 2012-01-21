@@ -38,17 +38,6 @@
 
 (def index-layout (html-resource "public/index.html"))
 
-(defn edit-card
-  "set up a page for editing a card"
-  [id]
-  (let [m (zdb/find-card-by-index id)]
-    (views/edit-card-template m)))
-
-(defn update-card
-  "update a flashcard in the db"
-  [m]
-  (do (zdb/update-card m)
-      (views/cards-list-transform)))
 
 (defmethod print-method clojure.lang.PersistentQueue
   [q, w]
@@ -100,10 +89,6 @@ new interval, and re-review if answer is not quick enough"
 ;;                         s
         ))
 
-;;  (GET "/fc/delete-confirm/:id" [id] (apply str (delete-card-confirm id)))
-;;  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
-;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
-;;  (POST "/fc/update" {params :params} (apply str (update-card params)))
   ;; show just the front of the flashcard
   ;; score the card
 ;;  (POST "fc/score" {params :params} (score params))
@@ -113,8 +98,6 @@ new interval, and re-review if answer is not quick enough"
 ;;  (route/resources "/")
 ;;  (route/not-found "Page not found"))
 
-;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
-;;  (POST "/fc/update" {params :params} (apply str (update-card params)))
 
 
 (defn wrapit [ret]
@@ -196,6 +179,18 @@ prepopulate form fields to add it"
     )
   )
 
+(defn edit-card
+  "set up a page for editing a card"
+  [id]
+  (let [m (zdb/find-card-by-index id)]
+    (render-response (apply str (views/edit-card-template m)))))
+
+(defn update-card
+  "update a flashcard in the db"
+  [{m :params}]
+  (do (zdb/update-card (keys-to-keywords m))
+      (render-response (apply str (views/cards-list-transform)))))
+
 (def zlt-app
   (m/app
    (wrap-file "resources/public")
@@ -209,12 +204,14 @@ prepopulate form fields to add it"
    ["fc" "review"] (wrapit (apply str (review-first-card)))
    ["fc" "check"] (wrapit (views/back @current-card))
    ["fc" "add"] add-flashcard
-   ;;  (GET "/fc/delete/:id" [id] (apply str (delete-card id)))
    ["fc" "delete" id] (constantly (delete-card id))
    ;; when the function needs an argument other than req
    ;; I need to wrap it in "constantly"
    ["fc" "delete-confirm" id] (constantly (delete-card-confirm id))
-;;  (GET "/fc/delete-confirm/:id" [id] (apply str (delete-card-confirm id)))
+   ;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
+   ["fc" "edit" id] (constantly (edit-card id))
+   ;;  (POST "/fc/update" {params :params} (apply str (update-card params)))
+   ["fc" "update"] update-card
    ))
 
 (defn me [mac]
