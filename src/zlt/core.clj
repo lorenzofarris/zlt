@@ -189,21 +189,21 @@ prepopulate form fields to add it"
    ;; it would appear to be wrap-reload that is killing
    ;; my references
    ;;(wrap-reload '(zlt.core))
-   ;;wrap-stacktrace
-   ;;wrap-params
-   ;;[""] {:get (wrapit (apply str (emit* index-layout)))}
-   ;;["cs"] render-search-results
-   ;;["csa"] lookup-char-to-learn
-   ;;["fc"] (wrapit (apply str (views/cards-list-transform)))
+   wrap-stacktrace
+   wrap-params
+   [""] {:get (wrapit (apply str (emit* index-layout)))}
+   ["cs"] render-search-results
+   ["csa"] lookup-char-to-learn
+   ["fc"] (wrapit (apply str (views/cards-list-transform)))
    ["fc" "review"] review-first-card
    ["fc" "check"]  (wrapit (views/back @current-card))
-   ;;["fc" "add"] add-flashcard
-   ;;["fc" "delete" id] (constantly (delete-card id))
+   ["fc" "add"] add-flashcard
+   ["fc" "delete" id] (constantly (delete-card id))
    ;; when the function needs an argument other than req
    ;; I need to wrap it in "constantly"
-   ;;["fc" "delete-confirm" id] (constantly (delete-card-confirm id))
-   ;;["fc" "edit" id] (constantly (edit-card id))
-   ;;["fc" "update"] update-card
+   ["fc" "delete-confirm" id] (constantly (delete-card-confirm id))
+   ["fc" "edit" id] (constantly (edit-card id))
+   ["fc" "update"] update-card
    )
   )
 
