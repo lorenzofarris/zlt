@@ -43,27 +43,6 @@
   [q, w]
   (print-method '<- w) (print-method (seq q) w) (print-method '-< w))
 
-(defn first-card
-  "get the flashcards that are due for review" []
-  (let [rd (zdb/get-review-deck)]
-    (dosync 
-     (ref-set review-deck rd)
-     (ref-set cards-done [])
-     (ref-set current-card (first @review-deck))
-     @current-card
-    )))
-
-(defn review-first-card "show the first card" []
-  (do
-    (first-card)
-    (debug "in review-first-card: " @current-card)
-    (let [resp (views/front @current-card)]
-      (debug "in review-first-card: " resp)
-      resp
-      )
-    )
-  )
-
 (defn- get-sm-parameters [m]
   (if (= "character" (:type m))
     {:rep_real (:rep_char_real m)
@@ -89,13 +68,6 @@ new interval, and re-review if answer is not quick enough"
 ;;                         s
         ))
 
-  ;; show just the front of the flashcard
-  ;; score the card
-;;  (POST "fc/score" {params :params} (score params))
-;;  ;; score the card
-;;  (POST "fc/score" {params :params} (score params))
-  ;;(GET "/fc/next" [] (apply str (review-next-card)))
-;;  (route/resources "/")
 ;;  (route/not-found "Page not found"))
 
 
@@ -191,28 +163,50 @@ prepopulate form fields to add it"
   (do (zdb/update-card (keys-to-keywords m))
       (render-response (apply str (views/cards-list-transform)))))
 
+(defn first-card
+  "get the flashcards that are due for review"
+  []
+  (let [rd (zdb/get-review-deck)]
+    (dosync 
+     (ref-set review-deck rd)
+     (ref-set cards-done [])
+     (ref-set current-card (first @review-deck))
+     @current-card
+     )
+    )
+  )
+
+(defn review-first-card "show the first card" [req]
+  (do
+    (first-card)
+    (render-response (apply str (views/front @current-card)))
+    )
+  )
+
 (def zlt-app
   (m/app
    (wrap-file "resources/public")
-   (wrap-reload '(zlt.core))
-   wrap-stacktrace
-   wrap-params
-   [""] {:get (wrapit (apply str (emit* index-layout)))}
-   ["cs"] render-search-results
-   ["csa"] lookup-char-to-learn
-   ["fc"] (wrapit (apply str (views/cards-list-transform)))
-   ["fc" "review"] (wrapit (apply str (review-first-card)))
-   ["fc" "check"] (wrapit (views/back @current-card))
-   ["fc" "add"] add-flashcard
-   ["fc" "delete" id] (constantly (delete-card id))
+   ;; it would appear to be wrap-reload that is killing
+   ;; my references
+   ;;(wrap-reload '(zlt.core))
+   ;;wrap-stacktrace
+   ;;wrap-params
+   ;;[""] {:get (wrapit (apply str (emit* index-layout)))}
+   ;;["cs"] render-search-results
+   ;;["csa"] lookup-char-to-learn
+   ;;["fc"] (wrapit (apply str (views/cards-list-transform)))
+   ["fc" "review"] review-first-card
+   ["fc" "check"]  (wrapit (views/back @current-card))
+   ;;["fc" "add"] add-flashcard
+   ;;["fc" "delete" id] (constantly (delete-card id))
    ;; when the function needs an argument other than req
    ;; I need to wrap it in "constantly"
-   ["fc" "delete-confirm" id] (constantly (delete-card-confirm id))
-   ;;  (GET "/fc/edit/:id" [id] (apply str (edit-card id)))
-   ["fc" "edit" id] (constantly (edit-card id))
-   ;;  (POST "/fc/update" {params :params} (apply str (update-card params)))
-   ["fc" "update"] update-card
-   ))
+   ;;["fc" "delete-confirm" id] (constantly (delete-card-confirm id))
+   ;;["fc" "edit" id] (constantly (edit-card id))
+   ;;["fc" "update"] update-card
+   )
+  )
+
 
 (defn me [mac]
   (clojure.pprint/pprint (macroexpand mac)))
