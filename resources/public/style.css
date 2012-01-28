@@ -1,18 +1,18 @@
+body{
+font-family: Times New Roman,Times,serif; 
+}
 div#lookup
 {
-font-family: Times New Roman,Times,serif; 
 font-size: xx-large; 
 background-color: #00ffff; 
 }
 div#results
 {
-font-family: Times New Roman,Times,serif; 
 font-size: xx-large; 
 background-color: #80ff80;
 }
 div#add_to_deck
 {
-font-family: Times New Roman,Times,serif; 
 font-size: xx-large; 
 background-color: #80ff80;
 }
@@ -34,9 +34,9 @@ font-size: xx-large;
 }
 .simp
 {
-font-size: 400%
+font-size: 400%;
 }
 .trad
 {
-font-size: 400%
+font-size: 400%;
 }

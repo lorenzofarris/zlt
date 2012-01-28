@@ -16,15 +16,17 @@
 
 ;; some variables
 (def current-card (ref {}))
-(def cards-missed (ref (clojure.lang.PersistentQueue/EMPTY)))
-(def cards-done (ref []))
-(def review-deck (ref []))
+(def card-queue (ref (clojure.lang.PersistentQueue/EMPTY)))
+;;(def cards-done (ref []))
+;;(def review-deck (ref []))
 
 (defn key-to-keyword
   "for a single map entry, change a string key to a keyword"
   [m e]
   (assoc m (keyword (key e)) (val e)))
 
+;; reinventing the wheel, turns out an equivalent function
+;; exists in clojure core
 (defn keys-to-keywords
   "change map keys from strings to keywords"
   ;; need to do this with recursion
@@ -38,58 +40,38 @@
 
 (def index-layout (html-resource "public/index.html"))
 
-
 (defmethod print-method clojure.lang.PersistentQueue
   [q, w]
   (print-method '<- w) (print-method (seq q) w) (print-method '-< w))
 
-(defn- get-sm-parameters [m]
-  (if (= "character" (:type m))
-    {:rep_real (:rep_char_real m)
-     :rep_effective (:rep_char_effective m)
-     :ef (:ef_char m)
-     :next_rep (:next_rep_char m)}
-    {:rep_real (:rep_pinyin_real m)
-     :rep_effective (:rep_pinyin_effective m)
-     :ef (:ef_pinyin m)
-     :next_rep (:next_pinyin_char m)}
-    )
-  )
-  
-(defn score [m]
-  "calculate the new difficulty factor and
-new interval, and re-review if answer is not quick enough"
-  ;; from web form I get only the score
-  (let [s (:score m)]
-;;        smp (get-sm-parameters *current-card*)
-;;        ef (sm2/difficulty (:ef smp))
-;;        i1 (sm2/interval (:rep_effective smp)
-;;                         (:ef smp)
-;;                         s
-        ))
-
 ;;  (route/not-found "Page not found"))
 
-
-
-(defn wrapit [ret]
+(defn wrapit
+  "wrap a value being returned in a web page as a function that
+returns a ring response"
+  [ret]
   (-> ret
       (response)
       (content-type "text/html; charset=utf-8")
       (constantly)))
 
-(defn app-cs [req]
+(defn app-cs
+  "test ring handler"
+  [req]
   (let [params (req :params)
         simplified (get params "simplified" "not found")]
     {:status 200
      :headers {"Content-Type" "text/html; charset=utf-8"}
      :body (str "Basic Ring Handler: " simplified)}))
 
-(defn app-cs1 [{params :params}]
+(defn app-cs1
+  "test ring handler"
+  [{params :params}]
   {:status 200
    :headers {"Content-Type" "text/html; charset=utf-8"}
    :body (str "Basic Ring Handler 2: " (get params "simplified" "not found"))})
 
+;; test ring app
 (def zlt-app1 (m/app wrap-params app-cs1))
 
 (defn render-response
@@ -163,15 +145,33 @@ prepopulate form fields to add it"
   (do (zdb/update-card (keys-to-keywords m))
       (render-response (apply str (views/cards-list-transform)))))
 
+(defn seq-to-queue
+  "convert a sequence to a persistent queue"
+  [s]
+  (if (= 0 (count s))
+    (clojure.lang.PersistentQueue/EMPTY)
+    (conj (seq-to-queue (rest s)) (first s))))
+
+;;(defn first-card-old
+;;  "get the flashcards that are due for review"
+;;  []
+;;  (let [rd (zdb/get-review-deck)]
+;;    (dosync 
+;;     (ref-set review-deck rd)
+;;     (ref-set cards-done [])
+;;     (ref-set current-card (first @review-deck))
+;;     @current-card
+;;     )
+;;    )
+;;  )
+
 (defn first-card
-  "get the flashcards that are due for review"
+  "get the flashcards that are due for review, and queue them up"
   []
   (let [rd (zdb/get-review-deck)]
-    (dosync 
-     (ref-set review-deck rd)
-     (ref-set cards-done [])
-     (ref-set current-card (first @review-deck))
-     @current-card
+    (dosync
+     (ref-set card-queue (seq-to-queue rd))
+     (ref-set current-card (peek @card-queue))
      )
     )
   )
@@ -179,7 +179,123 @@ prepopulate form fields to add it"
 (defn review-first-card "show the first card" [req]
   (do
     (first-card)
+    (debug "review-first-card: " @current-card)
     (render-response (apply str (views/front @current-card)))
+    )
+  )
+
+(defn review-card
+  "review the flashcards that are due"
+  [req]
+  (if (= 0 (count card-queue))
+    ;; this might be first time through, or trying again
+    (do
+      (first-card)
+      (if (= 0 (count card-queue))
+        ;; no more cards due, go to finish screen
+        (render-response
+         (apply str
+                (views/index-msg "Congratulations, no cards due for review.")))
+        (render-response (apply str (views/front @current-card)))
+        ) ; end of if
+      ) ; end of do
+    (render-response (apply str (views/front @current-card)))
+    ); end of if
+  )
+    
+(defn repeat-card
+  "take a card from the front of the queue and put it on the back"
+  []
+  (dosync
+   (alter card-queue conj @current-card)
+   (alter card-queue pop)
+   (ref-set current-card (peek @card-queue))
+   )
+  )
+
+(defn- get-sm-parameters [m]
+  (if (= "character" (:type m))
+    {:rep_real (:rep_char_real m)
+     :rep_effective (:rep_char_effective m)
+     :ef (:ef_char m)
+     :next_rep (:next_rep_char m)
+     :interval (:interval_char m)}
+    {:rep_real (:rep_pinyin_real m)
+     :rep_effective (:rep_pinyin_effective m)
+     :ef (:ef_pinyin m)
+     :next_rep (:next_rep_pinyin m)
+     :interval (:interval_pinyin m)}
+    )
+  )
+
+(defn update-sm2-params
+  "Returns a map made from current-card with parameters
+related to SuperMemo2 algorithm updated based on last
+flashcard review"
+  [i d]
+  (let [next-rep (java.util.Date.)
+        time (.getTime next-rep)]
+    ;; one day is 86400000 ms
+    (.setTime next-rep (* i 86400000))
+    (cond
+     (= (:type @current-card) "character")
+     (let [rep_real (:rep_char_real @current-card)
+           rep_effective (:rep_char_effective @current-card)]
+           (assoc @current-card
+             :rep_char_real (inc rep_real)
+             :rep_char_effective (inc rep_effective)
+             :ef_char d
+             :interval_char i
+             :next_rep_char next-rep))
+            
+     (= (:type @current-card) "pinyin")
+     (let [rep_real (:rep_pinyin_real @current-card)
+           rep_effective (:rep_pinyin_effective @current-card)]
+           (assoc @current-card
+             :rep_pinyin_real (inc rep_real)
+             :rep_pinyin_effective (inc rep_effective)
+             :ef_pinyin d
+             :interval_pinyin i
+             :next_rep_pinyin next-rep))
+     true {})
+    )
+  )
+
+(defn record-score [score]
+  (let [smp (get-sm-parameters score)
+        [i d] (sm2/efi (smp :rep_effective)
+                       (smp :ef)
+                       score
+                       (smp :interval))
+        nc (update-sm2-params i d)]
+    (zdb/update-card-sm2 nc)))
+
+(defn get-next-card
+  "discard the card just scored, and take the next card off the deck"
+  []
+  (dosync
+   (alter card-queue pop)
+   (ref-set current-card (peek @card-queue))
+   )
+
+(defn score-card
+  "Take the user's self-assigned score for the card.
+If score is 3 or less, put it back in the queue to review.
+If score is 4 or 5, compute new difficulty and interval,
+and update in the DB."
+  [{m :params}]
+  (let [score (m "score")]
+    ;; if score is less than 4, just put it in the queue
+    (if (< score 4)
+      (repeat-card)
+      (do
+        (record-score score)
+        (get-next-card)
+        (if (= 0 (count card-queue))
+          ;; return completion screen with links to main page
+          ;; go to page for next card
+        )
+      )
     )
   )
 
@@ -191,11 +307,11 @@ prepopulate form fields to add it"
    ;;(wrap-reload '(zlt.core))
    wrap-stacktrace
    wrap-params
-   [""] {:get (wrapit (apply str (emit* index-layout)))}
+   [""] {:get (wrapit (apply str (views/index-msg "")))}
    ["cs"] render-search-results
    ["csa"] lookup-char-to-learn
    ["fc"] (wrapit (apply str (views/cards-list-transform)))
-   ["fc" "review"] review-first-card
+   ["fc" "review"] review-card
    ["fc" "check"]  (wrapit (views/back @current-card))
    ["fc" "add"] add-flashcard
    ["fc" "delete" id] (constantly (delete-card id))
@@ -204,6 +320,7 @@ prepopulate form fields to add it"
    ["fc" "delete-confirm" id] (constantly (delete-card-confirm id))
    ["fc" "edit" id] (constantly (edit-card id))
    ["fc" "update"] update-card
+   ["fc" "score"] score-card
    )
   )
 

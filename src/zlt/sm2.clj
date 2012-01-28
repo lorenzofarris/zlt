@@ -1,4 +1,5 @@
-(ns zlt.sm2)
+(ns zlt.sm2
+  (:require [clojure.contrib.math :as math]))
             
 ;; calculations of optimal next repetition of flash card items
 
@@ -29,7 +30,26 @@ i: old interval"
    (= n 1) 1
    (= n 2) 6
    (< q 3) 1
-   true (* i (difficulty d q))))
+   true (math/round (math/ceil (* i (difficulty d q))))))
+
+(defn efi
+  "calculate interval until next review of card, given repetition number,
+difficulty factor, and quality of current answer. Arguments are
+n: repetition number
+d: current difficulty factor
+q: quality of response
+i: old interval
+returns a list containing the new interval and new difficulty factor."
+  [n d q i]
+  (let [dd (difficulty d q)
+        ii  (cond
+             (= n 1) 1
+             (= n 2) 6
+             (< q 3) 1
+             true (* i dd)
+             )]
+    [(-> ii math/ceil math/round) dd]
+    ))
 
 ;; for each item, I will need
 ;; rep number

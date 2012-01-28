@@ -142,8 +142,37 @@ and initialize supermemo parameters"
          :interval_char 1
          :interval_pinyin 1 })))))
 
+(defn update-card-sm2
+  "update a flashcard to the flashcard table,
+and initialize supermemo parameters"
+  [card]
+  (let [{index :index,
+         rep_char_real :rep_char_real,
+         rep_char_effective :rep_char_effective,
+         ef_char :ef_char,
+         next_rep_char :next_rep_char,
+         rep_pinyin_real :rep_pinyin_real,
+         rep_pinyin_effective :rep_pinyin_effective,
+         ef_pinyin :ef_pinyin,
+         next_rep_pinyin :next_rep_pinyin,
+         interval_char :interval_char, 
+         interval_pinyin :interval_pinyin} card]
+    (cql/update-in!
+     (cql/table h2db :flashcards)
+     (cql/where (= :index (:index card)))
+     {:rep_char_real rep_char_real
+      :rep_char_effective rep_char_effective
+      :ef_char ef_char
+      :next_rep_char next_rep_char
+      :rep_pinyin_real rep_pinyin_real
+      :rep_pinyin_effective rep_pinyin_effective
+      :ef_pinyin ef_pinyin
+      :next_rep_pinyin next_rep_pinyin
+      :interval_char interval_char
+      :interval_pinyin interval_pinyin })))
+
 (defn update-card
-  "add a new flashcard to the flashcard table,
+  "update a modified flashcard to the flashcard table,
 and initialize supermemo parameters"
   [card]
   (let [trad (:traditional card)
@@ -168,7 +197,6 @@ and initialize supermemo parameters"
       :next_rep_pinyin today
       :interval_char 1
       :interval_pinyin 1})))
-
 
 (defn create-flashcard-table
   "Create a table for flashcards"
