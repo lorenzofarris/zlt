@@ -276,7 +276,7 @@ flashcard review"
   (dosync
    (alter card-queue pop)
    (ref-set current-card (peek @card-queue))
-   )
+   ))
 
 (defn score-card
   "Take the user's self-assigned score for the card.
@@ -292,8 +292,10 @@ and update in the DB."
         (record-score score)
         (get-next-card)
         (if (= 0 (count card-queue))
+          ;; TODO complete this routine
           ;; return completion screen with links to main page
           ;; go to page for next card
+          )
         )
       )
     )
